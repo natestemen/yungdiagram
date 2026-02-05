@@ -127,10 +127,13 @@ class YoungDiagram:
         for y, row in enumerate(self.cells):
             for x, cell in enumerate(row):
                 hook_lengths.append(self.hook_length((x, y)))
-        product_of_hook_lengths = np.prod(hook_lengths)
+        product_of_hook_lengths = math.prod(hook_lengths)
         return int(math.factorial(n) / product_of_hook_lengths)
     
     def __add__(self, other: Cell) -> 'YoungDiagram':
+        if other not in self.addable_cells():
+            raise ValueError("Cell is not addable.")
+
         new_partition = self.partition.copy()
         if other.y == len(new_partition):
             new_partition.append(1)
@@ -139,6 +142,9 @@ class YoungDiagram:
         return YoungDiagram(new_partition)
     
     def __sub__(self, other: Cell) -> 'YoungDiagram':
+        if other not in self.removable_cells():
+            raise ValueError("Cell is not removable.")
+
         new_partition = self.partition.copy()
         new_partition[other.y] -= 1
         if new_partition[other.y] == 0:
