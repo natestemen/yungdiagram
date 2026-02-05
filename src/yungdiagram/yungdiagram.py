@@ -107,13 +107,8 @@ class YoungDiagram:
             print(' '.join(row))
 
     def draw(self):
-        max_length = max(self.partition) if self.partition else 0
-        diagram = np.full((len(self.partition), max_length), ' ')
-        for y, row_length in enumerate(self.partition):
-            for x in range(row_length):
-                diagram[y, x] = '■'
-        for row in diagram:
-            print(' '.join(row))
+        for row in self.partition:
+            print('■ ' * row)
     
     def hook_length(self, index: tuple[int, int]) -> int:
         x, y = index
