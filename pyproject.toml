@@ -1,0 +1,10 @@
+[project]
+name = "yungdiagram"
+version = "0.1.0"
+description = "Tools for manipulating and studying young diagrams."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
