@@ -1,3 +1,5 @@
+import pytest
+
 from yungdiagram import Cell, YoungDiagram
 
 def test_young_diagram_initialization():
@@ -7,6 +9,11 @@ def test_young_diagram_initialization():
     assert len(yd.cells[0]) == 4
     assert len(yd.cells[1]) == 3
     assert len(yd.cells[2]) == 1
+
+def test_invalid_partition():
+    with pytest.raises(ValueError, match="Invalid partition"):
+        YoungDiagram([1, 2])
+
 
 def test_addable_cells():
     yd = YoungDiagram([3, 2])
@@ -19,3 +26,13 @@ def test_removable_cells():
     removable = yd.removable_cells()
 
     assert removable == [Cell(1, 1)]
+
+def test_transpose():
+    yd = YoungDiagram([1])
+
+    assert yd.transpose() == yd
+
+    yd = YoungDiagram([5, 5, 2, 1])
+    expected = YoungDiagram([4, 3, 2, 2, 2])
+
+    assert yd.transpose() == expected

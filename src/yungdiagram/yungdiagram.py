@@ -9,6 +9,9 @@ class YoungDiagram:
         self.cells = self._generate_cells()
     
     def _generate_cells(self) -> list[Cell]:
+        for i, j in zip(self.partition, self.partition[1:]):
+            if j > i:
+                raise ValueError("Invalid partition.")
         cells = []
         for y, row_length in enumerate(self.partition):
             row = []
@@ -53,7 +56,7 @@ class YoungDiagram:
             diagrams.append(YoungDiagram(new_partition))
         return diagrams
             
-    def draw_addable_cells(self) -> list[Cell]:
+    def draw_addable_cells(self) -> None:
         """draws the young diagram with the addable cells marked with '+'.
         using the function addable_cells.
         """
@@ -89,7 +92,7 @@ class YoungDiagram:
             diagrams.append(YoungDiagram(new_partition))
         return diagrams
     
-    def draw_removable_cells(self) -> list[Cell]:
+    def draw_removable_cells(self) -> None:
         """draws the young diagram with the removable cells marked with a red square.
         the function removable_cells is used.
         """
@@ -145,4 +148,15 @@ class YoungDiagram:
         new_partition[other.y] -= 1
         if new_partition[other.y] == 0:
             new_partition.pop()
+        return YoungDiagram(new_partition)
+
+    def __eq__(self, other: 'YoungDiagram') -> bool:
+        return self.partition == other.partition
+    
+    def transpose(self) -> 'YoungDiagram':
+        new_partition = [
+            sum(1 for x in self.partition if x >= j)
+            for j in range(1, self.partition[0] + 1)
+        ]
+        print(new_partition)
         return YoungDiagram(new_partition)
