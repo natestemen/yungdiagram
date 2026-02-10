@@ -36,3 +36,10 @@ def test_transpose():
     expected = YoungDiagram([4, 3, 2, 2, 2])
 
     assert yd.transpose() == expected
+
+def test_stringification():
+    yd = YoungDiagram([5, 5, 4])
+
+    table = str(yd)
+    assert isinstance(table, str)
+    assert "■" in table

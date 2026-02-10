@@ -32,9 +32,11 @@ class YoungDiagram:
         cell = self[index]
         return cell.x - cell.y
 
-    def __str__(self):
+    def __str__(self) -> str:
+        rows = []
         for row in self.partition:
-            print("■ " * row)
+            rows.append("■ " * row)
+        return "".join(rows)
 
     def addable_cells(self) -> list[Cell]:
         addable = []

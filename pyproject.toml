@@ -4,7 +4,28 @@ version = "0.1.0"
 description = "Tools for manipulating and studying young diagrams."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["numpy"]
+
+authors = [
+    { name = "nate stemen", email = "nate@stemen.email" }
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/natestemen/yungdiagram"
+Repository = "https://github.com/natestemen/yungdiagram"
+Issues = "https://github.com/natestemen/yungdiagram/issues"
 
 [project.optional-dependencies]
 dev = ["pytest"]
