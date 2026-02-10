@@ -43,3 +43,4 @@ def test_stringification():
     table = str(yd)
     assert isinstance(table, str)
     assert "■" in table
+    assert "\n" in table

@@ -36,7 +36,7 @@ class YoungDiagram:
         rows = []
         for row in self.partition:
             rows.append("■ " * row)
-        return "".join(rows)
+        return "\n".join(rows)
 
     def addable_cells(self) -> list[Cell]:
         addable = []
