@@ -41,6 +41,9 @@ def test_stringification():
     yd = YoungDiagram([5, 5, 4])
 
     table = str(yd)
-    assert isinstance(table, str)
-    assert "■" in table
-    assert "\n" in table
+    assert table == "■ ■ ■ ■ ■ \n■ ■ ■ ■ ■ \n■ ■ ■ ■ "
+
+@pytest.mark.parametrize("diagram_size", range(500, 1, -10))
+def test_random_diagram(diagram_size):
+    yd = YoungDiagram.random(num_cells=diagram_size)
+    assert yd.size == diagram_size

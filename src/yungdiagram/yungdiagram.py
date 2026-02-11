@@ -1,9 +1,13 @@
 import math
+import random
 
 from yungdiagram.cell import Cell
 
 
 class YoungDiagram:
+    _P = None   # partition counts
+    _max_precomputed = 0
+
     def __init__(self, partition: list[int]):
         self.partition = partition
         self.cells = self._generate_cells()
@@ -166,3 +170,54 @@ class YoungDiagram:
         ]
         print(new_partition)
         return YoungDiagram(new_partition)
+    
+    @classmethod
+    def _ensure_partition_tables(cls, n: int):
+        if cls._max_precomputed >= n:
+            return
+
+        P = [[0] * (n + 1) for _ in range(n + 1)]
+
+        for k in range(n + 1):
+            P[0][k] = 1  # one way to partition 0
+
+        for total in range(1, n + 1):
+            for k in range(1, n + 1):
+                if k > total:
+                    P[total][k] = P[total][total]
+                else:
+                    P[total][k] = P[total][k - 1] + P[total - k][k]
+
+        cls._P = P
+        cls._max_precomputed = n
+
+
+    @classmethod
+    def random(cls, num_cells: int) -> "YoungDiagram":
+        cls._ensure_partition_tables(num_cells)
+
+        partition = []
+        cells_left = num_cells
+        max_row = num_cells
+
+        while cells_left > 0:
+            max_row = min(max_row, cells_left)
+
+            total = cls._P[cells_left][max_row]
+
+            r = random.randint(1, total)
+
+            cumulative = 0
+            for k in range(1, max_row + 1):
+                # exact count for largest part exactly k
+                exact = cls._P[cells_left][k] - cls._P[cells_left][k - 1]
+                cumulative += exact
+                if cumulative >= r:
+                    break
+
+            partition.append(k)
+            cells_left -= k
+            max_row = k
+
+        return cls(partition)
+
