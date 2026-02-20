@@ -136,8 +136,26 @@ class YoungDiagram:
         for y, row in enumerate(self.cells):
             for x, cell in enumerate(row):
                 hook_lengths.append(self.hook_length((x, y)))
-        product_of_hook_lengths = math.prod(hook_lengths)
-        return int(math.factorial(n) / product_of_hook_lengths)
+
+        # Compute n! / prod(hook_lengths) without constructing n! directly.
+        # Reduce factors incrementally to keep intermediate values smaller.
+        denoms = hook_lengths
+        result = 1
+        for i in range(2, n + 1):
+            num = i
+            for idx, d in enumerate(denoms):
+                if d == 1:
+                    continue
+                g = math.gcd(num, d)
+                if g > 1:
+                    num //= g
+                    d //= g
+                    denoms[idx] = d
+                    if num == 1:
+                        break
+            if num > 1:
+                result *= num
+        return result
 
     def __add__(self, other: Cell) -> "YoungDiagram":
         if other not in self.addable_cells():
@@ -220,4 +238,3 @@ class YoungDiagram:
             max_row = k
 
         return cls(partition)
-
