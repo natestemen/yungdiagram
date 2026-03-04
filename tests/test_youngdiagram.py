@@ -27,15 +27,15 @@ def test_removable_cells():
 
     assert removable == [Cell(1, 1)]
 
-def test_transpose():
+def test_conjugate():
     yd = YoungDiagram([1])
 
-    assert yd.transpose() == yd
+    assert yd.conjugate() == yd
 
     yd = YoungDiagram([5, 5, 2, 1])
     expected = YoungDiagram([4, 3, 2, 2, 2])
 
-    assert yd.transpose() == expected
+    assert yd.conjugate() == expected
 
 def test_stringification():
     yd = YoungDiagram([5, 5, 4])

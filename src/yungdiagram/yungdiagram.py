@@ -1,5 +1,6 @@
 import math
 import random
+from typing import Literal
 
 from yungdiagram.cell import Cell
 
@@ -37,9 +38,53 @@ class YoungDiagram:
         return cell.x - cell.y
 
     def __str__(self) -> str:
-        rows = []
-        for row in self.partition:
-            rows.append("■ " * row)
+        return self.to_string()
+
+    def to_string(self, *, convention: Literal["english", "french", "russian"] = "english") -> str:
+        """Return a string representation of the diagram in a given convention."""
+        if convention == "english":
+            rows = self.partition
+            return "\n".join("■ " * row for row in rows)
+        if convention == "french":
+            rows = reversed(self.partition)
+            return "\n".join("■ " * row for row in rows)
+        return self._to_string_russian()
+
+    def print(self, *, convention: str = "english") -> None:
+        """Print the diagram in the requested convention."""
+        print(self.to_string(convention=convention))
+
+    def _to_string_russian(self) -> str:
+        if not self.partition:
+            return ""
+
+        coords: list[tuple[int, int]] = []
+        for y, row_len in enumerate(self.partition):
+            for x in range(row_len):
+                # Rotate the French diagram by 45 degrees to get Russian coordinates.
+                u = x - y
+                v = x + y
+                coords.append((u, v))
+
+        us = [u for u, _ in coords]
+        vs = [v for _, v in coords]
+        min_u, max_u = min(us), max(us)
+        min_v, max_v = min(vs), max(vs)
+
+        scale = 2  # spacing to keep the diagonals readable
+        width = (max_u - min_u) * scale + 1
+
+        by_v: dict[int, list[int]] = {}
+        for u, v in coords:
+            by_v.setdefault(v, []).append(u)
+
+        rows: list[str] = []
+        for v in range(max_v, min_v - 1, -1):
+            row = [" "] * width
+            for u in by_v.get(v, []):
+                idx = (u - min_u) * scale
+                row[idx] = "■"
+            rows.append("".join(row).rstrip())
         return "\n".join(rows)
 
     def addable_cells(self) -> list[Cell]:
@@ -181,7 +226,7 @@ class YoungDiagram:
     def __eq__(self, other: "YoungDiagram") -> bool:
         return self.partition == other.partition
 
-    def transpose(self) -> "YoungDiagram":
+    def conjugate(self) -> "YoungDiagram":
         new_partition = [
             sum(1 for x in self.partition if x >= j)
             for j in range(1, self.partition[0] + 1)
