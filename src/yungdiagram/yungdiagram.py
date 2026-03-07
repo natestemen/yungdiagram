@@ -1,7 +1,7 @@
 import math
 import random
 from itertools import accumulate, zip_longest
-from typing import Literal, NamedTuple
+from typing import NamedTuple
 
 
 class Cell(NamedTuple):
@@ -18,15 +18,23 @@ class YoungDiagram:
     _max_precomputed = 0
 
     def __init__(self, partition: tuple[int, ...] | list[int]):
-        self.partition = tuple(partition)
-        self.cells = self._generate_cells()
+        self.partition = self._validate_partition(list(partition))
+        self.cells = self._generate_cells(list(partition))
 
-    def _generate_cells(self) -> list[Cell]:
-        for i, j in zip(self.partition, self.partition[1:]):
+    def _validate_partition(self, partition: list[int]) -> tuple[int, ...]:
+        while partition and partition[-1] == 0:
+            partition.pop()
+
+        if any(x <= 0 for x in partition):
+            raise ValueError("Invalid partition.")
+        for i, j in zip(partition, partition[1:]):
             if j > i:
                 raise ValueError("Invalid partition.")
+        return tuple(partition)
+
+    def _generate_cells(self, partition: list[int]) -> list[Cell]:
         cells = []
-        for y, row_length in enumerate(self.partition):
+        for y, row_length in enumerate(partition):
             row = []
             for x in range(row_length):
                 row.append(Cell(x, y))
@@ -48,25 +56,30 @@ class YoungDiagram:
         return f"YoungDiagram({list(self.partition)})"
 
     def __str__(self) -> str:
-        return self.to_string()
+        return format(self)
 
-    def to_string(
-        self, *, convention: Literal["english", "french", "russian"] = "english"
-    ) -> str:
-        """Return a string representation of the diagram in a given convention."""
-        if convention == "english":
-            rows = self.partition
-            return "\n".join("■ " * row for row in rows)
+    def __format__(self, convention: str) -> str:
+        """Format the diagram using a convention specifier.
+
+        Supported conventions: ``"english"`` (default), ``"french"``, ``"russian"``.
+
+        Examples::
+
+            str(diagram)            # english (default)
+            f"{diagram}"            # english (default)
+            f"{diagram:french}"     # french
+            format(diagram, "russian")
+        """
+        if not convention or convention == "english":
+            return "\n".join("■ " * row for row in self.partition)
         if convention == "french":
-            rows = reversed(self.partition)
-            return "\n".join("■ " * row for row in rows)
-        return self._to_string_russian()
-
-    def print(
-        self, *, convention: Literal["english", "french", "russian"] = "english"
-    ) -> None:
-        """Print the diagram in the requested convention."""
-        print(self.to_string(convention=convention))
+            return "\n".join("■ " * row for row in reversed(self.partition))
+        if convention == "russian":
+            return self._to_string_russian()
+        raise ValueError(
+            f"Unknown convention {convention!r}. "
+            "Expected 'english', 'french', or 'russian'."
+        )
 
     def _to_string_russian(self) -> str:
         if not self.partition:
@@ -130,7 +143,7 @@ class YoungDiagram:
         return removable
 
     def reachable_young_diagrams_by_removal(self) -> list["YoungDiagram"]:
-        """A list of reachable diagrams via a single cell addition. Often notated λ↘︎μ
+        """A list of reachable diagrams via a single cell removal. Often notated λ↘︎μ
         where μ is the collection of diagrams being returned. Alternatively this is
         written μ↗λ. That is the diagrams which give back lambda when adding a single
         cell."""
@@ -138,30 +151,27 @@ class YoungDiagram:
 
     def _draw_with_marks(
         self, marks: dict[tuple[int, int], str], height: int, width: int
-    ) -> None:
+    ) -> str:
         diagram = [[" "] * width for _ in range(height)]
         for y, row_len in enumerate(self.partition):
             diagram[y][:row_len] = ["■"] * row_len
         for (x, y), ch in marks.items():
             diagram[y][x] = ch
-        for row in diagram:
-            print(" ".join(row))
+        return "\n".join(" ".join(row) for row in diagram)
 
-    def draw_addable(self):
-        """Draw the Young diagram with addable cells marked by '+'."""
+    def draw_addable(self) -> str:
+        """Return the diagram as a string with addable cells marked by '+'."""
         marks = {(c.x, c.y): "+" for c in self.addable_cells()}
-        self._draw_with_marks(
+        return self._draw_with_marks(
             marks,
             height=len(self.partition) + 1,
             width=max(self.partition) + 1 if self.partition else 1,
         )
 
-    def draw_removable(self):
-        """draws the young diagram with the removable cells marked with a red square.
-        the function removable_cells is used.
-        """
+    def draw_removable(self) -> str:
+        """Return the diagram as a string with removable cells marked by '□'."""
         marks = {(c.x, c.y): "□" for c in self.removable_cells()}
-        self._draw_with_marks(
+        return self._draw_with_marks(
             marks,
             height=len(self.partition),
             width=max(self.partition) if self.partition else 0,
@@ -231,15 +241,15 @@ class YoungDiagram:
         return YoungDiagram(new_partition)
 
     def __eq__(self, other: "YoungDiagram") -> bool:
+        if not isinstance(other, YoungDiagram):
+            return False
         return self.partition == other.partition
 
     def __hash__(self) -> int:
         return hash(self.partition)
 
     def __contains__(self, cell: Cell | tuple[int, int]) -> bool:
-        if isinstance(cell, Cell):
-            return cell.y < len(self.partition) and cell.x < self.partition[cell.y]
-        if isinstance(cell, tuple):
+        if isinstance(cell, (Cell, tuple)):
             x, y = cell
             return y < len(self.partition) and x < self.partition[y]
         return NotImplemented
