@@ -1,5 +1,6 @@
 import math
 import random
+from itertools import accumulate, zip_longest
 from typing import Literal, NamedTuple
 
 
@@ -61,7 +62,9 @@ class YoungDiagram:
             return "\n".join("■ " * row for row in rows)
         return self._to_string_russian()
 
-    def print(self, *, convention: str = "english") -> None:
+    def print(
+        self, *, convention: Literal["english", "french", "russian"] = "english"
+    ) -> None:
         """Print the diagram in the requested convention."""
         print(self.to_string(convention=convention))
 
@@ -99,6 +102,8 @@ class YoungDiagram:
         return "\n".join(rows)
 
     def addable_cells(self) -> list[Cell]:
+        """A list of individual cells that can be added to self to maintain a valid
+        diagram"""
         addable = []
         for row_index, row in enumerate(self.cells):
             above_len = self.partition[row_index - 1] if row_index > 0 else float("inf")
@@ -108,6 +113,8 @@ class YoungDiagram:
         return addable
 
     def reachable_young_diagrams_by_addition(self) -> list["YoungDiagram"]:
+        """A list of reachable diagrams via a single cell addition. Often notated λ↗μ
+        where μ is the collection of diagrams being returned."""
         return [self + cell for cell in self.addable_cells()]
 
     def removable_cells(self) -> list[Cell]:
@@ -123,6 +130,10 @@ class YoungDiagram:
         return removable
 
     def reachable_young_diagrams_by_removal(self) -> list["YoungDiagram"]:
+        """A list of reachable diagrams via a single cell addition. Often notated λ↘︎μ
+        where μ is the collection of diagrams being returned. Alternatively this is
+        written μ↗λ. That is the diagrams which give back lambda when adding a single
+        cell."""
         return [self - cell for cell in self.removable_cells()]
 
     def _draw_with_marks(
@@ -156,15 +167,20 @@ class YoungDiagram:
             width=max(self.partition) if self.partition else 0,
         )
 
-    def hook_length(self, index: tuple[int, int]) -> int:
-        x, y = index
-        right = len(self.cells[y][x + 1 :])
-        below = []
-        for row in self.cells[y + 1 :]:
-            if x < len(row):
-                below.append(row[x])
+    def arm_length(self, cell: Cell | tuple[int, int]) -> int:
+        if cell not in self:
+            raise ValueError(f"cell {cell} is not contained in diagram.")
+        x, y = cell
+        return self.partition[y] - x - 1
 
-        return right + len(below) + 1
+    def leg_length(self, cell: Cell | tuple[int, int]) -> int:
+        if cell not in self:
+            raise ValueError(f"cell {cell} is not contained in diagram.")
+        x, y = cell
+        return sum(1 for row in self.partition[y + 1 :] if row > x)
+
+    def hook_length(self, cell: Cell | tuple[int, int]) -> int:
+        return self.arm_length(cell) + self.leg_length(cell) + 1
 
     def number_of_standard_tableaux(self) -> int:
         n = sum(self.partition)
@@ -220,6 +236,14 @@ class YoungDiagram:
     def __hash__(self) -> int:
         return hash(self.partition)
 
+    def __contains__(self, cell: Cell | tuple[int, int]) -> bool:
+        if isinstance(cell, Cell):
+            return cell.y < len(self.partition) and cell.x < self.partition[cell.y]
+        if isinstance(cell, tuple):
+            x, y = cell
+            return y < len(self.partition) and x < self.partition[y]
+        return NotImplemented
+
     def conjugate(self) -> "YoungDiagram":
         if not self.partition:
             return YoungDiagram([])
@@ -228,6 +252,35 @@ class YoungDiagram:
             for j in range(1, self.partition[0] + 1)
         ]
         return YoungDiagram(new_partition)
+
+    def is_self_conjugate(self) -> bool:
+        return self == self.conjugate()
+
+    def dominates(self, other: "YoungDiagram") -> bool:
+        """self dominates (≽) other if the cumulative sum of self's parts is >= other's
+        at every position."""
+        self_cumulative = accumulate(self.partition)
+        other_cumulative = accumulate(other.partition)
+        return all(
+            p >= q
+            for p, q in zip_longest(self_cumulative, other_cumulative, fillvalue=0)
+        )
+
+    def contains(self, other: "YoungDiagram") -> bool:
+        """self contains other if every cell in other belongs to self."""
+        return all(
+            p >= q for p, q in zip_longest(self.partition, other.partition, fillvalue=0)
+        )
+
+    @property
+    def durfee_square_size(self) -> int:
+        return sum(
+            1 for k, row_len in enumerate(self.partition, start=1) if row_len >= k
+        )
+
+    def durfee_square(self) -> "YoungDiagram":
+        size = self.durfee_square_size
+        return YoungDiagram([size] * size)
 
     @classmethod
     def _ensure_partition_tables(cls, n: int):

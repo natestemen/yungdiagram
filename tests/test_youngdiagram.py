@@ -57,6 +57,7 @@ def test_conjugate():
 
     assert yd.conjugate() == expected
 
+
 def test_conjugate_empty():
     yd = YoungDiagram(())
     assert yd.conjugate() == yd
@@ -115,3 +116,80 @@ def test_removing_invalid_cell():
 def test_random_diagram(diagram_size):
     yd = YoungDiagram.random(num_cells=diagram_size)
     assert yd.size == diagram_size
+
+
+def test_diagram_containment():
+    yd1 = YoungDiagram([8, 4, 4, 1])
+    yd2 = YoungDiagram([8, 2, 1])
+
+    assert yd1.contains(yd2)
+    assert not yd2.contains(yd1)
+
+
+def test_diagram_domination():
+    yd1 = YoungDiagram([3, 1])
+    yd2 = YoungDiagram([2, 2])
+
+    assert yd1.dominates(yd2)
+    assert not yd2.dominates(yd1)
+    assert not yd1.contains(yd2)
+
+
+def test_durfee_square():
+    yd = YoungDiagram((8, 4, 4, 3, 1))
+    # ■ ■ ■ □ □ □ □ □
+    # ■ ■ ■ □
+    # ■ ■ ■ □
+    # □ □ □
+    # □
+
+    assert yd.durfee_square_size == 3
+    assert yd.durfee_square() == YoungDiagram((3, 3, 3))
+
+
+def test_durfee_square_empty():
+    yd = YoungDiagram(())
+    assert yd.durfee_square_size == 0
+    assert yd.durfee_square() == yd
+
+
+def test_cell_containment():
+    yd = YoungDiagram((5, 1))
+    # ■ ■ ■ ■ ■
+    # ■
+    assert (1, 0) in yd
+    assert Cell(0, 1) in yd
+    assert Cell(2, 2) not in yd
+
+
+def test_arm_length():
+    yd = YoungDiagram((5, 2))
+    # ■ ■ ■ ■ ■
+    # ■ ■
+    for i in range(5):
+        assert yd.arm_length((i, 0)) == 5 - i - 1
+    assert yd.arm_length((0, 1)) == 1
+
+
+def test_leg_length():
+    yd = YoungDiagram((3, 3, 2, 2, 1))
+    # ■ ■ ■
+    # ■ ■ ■
+    # ■ ■
+    # ■ ■
+    # ■
+    for i in range(5):
+        assert yd.leg_length((0, i)) == 5 - i -1
+    
+    assert yd.leg_length((1, 1)) == 2
+    assert yd.leg_length((2, 1)) == 0
+
+def test_hook_length():
+    yd = YoungDiagram((3, 3, 2))
+    # ■ ■ ■
+    # ■ ■ ■
+    # ■ ■
+    assert yd.hook_length((0, 0)) == 5
+    assert yd.hook_length((0, 1)) == 4
+    assert yd.hook_length((1, 1)) == 3
+
