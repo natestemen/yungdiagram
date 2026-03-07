@@ -53,7 +53,7 @@ class YoungDiagram:
         return self[index].content
 
     def __repr__(self) -> str:
-        return f"YoungDiagram({list(self.partition)})"
+        return f"YoungDiagram({self.partition})"
 
     def __str__(self) -> str:
         return format(self)

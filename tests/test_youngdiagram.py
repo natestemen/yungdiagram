@@ -193,3 +193,84 @@ def test_hook_length():
     assert yd.hook_length((0, 1)) == 4
     assert yd.hook_length((1, 1)) == 3
 
+
+def test_repr():
+    assert repr(YoungDiagram([4, 2, 1])) == "YoungDiagram((4, 2, 1))"
+    assert repr(YoungDiagram([])) == "YoungDiagram(())"
+
+
+def test_format_french():
+    yd = YoungDiagram([3, 2, 1])
+    assert format(yd, "french") == "■ \n■ ■ \n■ ■ ■ "
+
+
+def test_format_russian():
+    # too lazy to define the diagram
+    yd = YoungDiagram([3, 2, 1])
+    result = format(yd, "russian")
+    assert isinstance(result, str)
+    assert result.count("■") == yd.size
+
+
+def test_format_invalid_convention():
+    yd = YoungDiagram([2, 1])
+    with pytest.raises(ValueError, match="Unknown convention"):
+        format(yd, "diagonal")
+
+
+def test_size():
+    assert YoungDiagram([4, 3, 1]).size == 8
+    assert YoungDiagram([]).size == 0
+
+
+def test_eq():
+    assert YoungDiagram([3, 2]) == YoungDiagram([3, 2])
+    assert YoungDiagram([3, 2]) != YoungDiagram([3, 1])
+    assert YoungDiagram([3, 2]) != "not a diagram"
+
+
+def test_cell_content():
+    # content = x - y
+    assert Cell(3, 1).content == 2
+    assert Cell(0, 0).content == 0
+
+    yd = YoungDiagram([3, 2, 1])
+    assert yd.content((2, 0)) == 2
+    assert yd.content((0, 2)) == -2
+
+
+def test_number_of_standard_tableaux():
+    # Single cell: only one SYT
+    assert YoungDiagram([1]).number_of_standard_tableaux() == 1
+    # Hook formula for (2,1): 3! / (3*1*1) = 2
+    assert YoungDiagram([2, 1]).number_of_standard_tableaux() == 2
+    # Staircase (3,2,1): 6! / (5*3*1*3*1*1) = 16
+    assert YoungDiagram([3, 2, 1]).number_of_standard_tableaux() == 16
+    # Rectangle (2,2): 4! / (3*1*2*1) = 2
+    assert YoungDiagram([2, 2]).number_of_standard_tableaux() == 2
+
+
+def test_is_self_conjugate():
+    assert YoungDiagram([3, 2, 1]).is_self_conjugate()
+    assert YoungDiagram([1]).is_self_conjugate()
+    assert not YoungDiagram([3, 1]).is_self_conjugate()
+
+
+def test_trailing_zeros_stripped():
+    yd = YoungDiagram([3, 2, 0])
+    assert yd.partition == (3, 2)
+
+
+def test_draw_addable_returns_string():
+    yd = YoungDiagram([2, 1])
+    result = yd.draw_addable()
+    assert isinstance(result, str)
+    assert "+" in result
+
+
+def test_draw_removable_returns_string():
+    yd = YoungDiagram([2, 1])
+    result = yd.draw_removable()
+    assert isinstance(result, str)
+    assert "□" in result
+
