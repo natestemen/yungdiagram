@@ -22,10 +22,17 @@ classifiers = [
 
 dependencies = []
 
+
 [project.urls]
 Homepage = "https://github.com/natestemen/yungdiagram"
 Repository = "https://github.com/natestemen/yungdiagram"
 Issues = "https://github.com/natestemen/yungdiagram/issues"
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

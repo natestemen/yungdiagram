@@ -1,2 +1,2 @@
-from yungdiagram.yungdiagram import YoungDiagram
-from yungdiagram.cell import Cell
+from yungdiagram.yungdiagram import Cell as Cell
+from yungdiagram.yungdiagram import YoungDiagram as YoungDiagram

@@ -1,16 +1,23 @@
 import math
 import random
-from typing import Literal
+from typing import Literal, NamedTuple
 
-from yungdiagram.cell import Cell
+
+class Cell(NamedTuple):
+    x: int
+    y: int
+
+    @property
+    def content(self) -> int:
+        return self.x - self.y
 
 
 class YoungDiagram:
-    _P = None   # partition counts
+    _P = None  # partition counts
     _max_precomputed = 0
 
-    def __init__(self, partition: list[int]):
-        self.partition = partition
+    def __init__(self, partition: tuple[int, ...] | list[int]):
+        self.partition = tuple(partition)
         self.cells = self._generate_cells()
 
     def _generate_cells(self) -> list[Cell]:
@@ -34,13 +41,17 @@ class YoungDiagram:
         return sum(self.partition)
 
     def content(self, index: tuple[int, int]) -> int:
-        cell = self[index]
-        return cell.x - cell.y
+        return self[index].content
+
+    def __repr__(self) -> str:
+        return f"YoungDiagram({list(self.partition)})"
 
     def __str__(self) -> str:
         return self.to_string()
 
-    def to_string(self, *, convention: Literal["english", "french", "russian"] = "english") -> str:
+    def to_string(
+        self, *, convention: Literal["english", "french", "russian"] = "english"
+    ) -> str:
         """Return a string representation of the diagram in a given convention."""
         if convention == "english":
             rows = self.partition
@@ -90,48 +101,29 @@ class YoungDiagram:
     def addable_cells(self) -> list[Cell]:
         addable = []
         for row_index, row in enumerate(self.cells):
-            last_cell = row[-1]
-            if row_index == 0:
-                addable.append(Cell(last_cell.x + 1, last_cell.y))
-            else:
-                above_row = self.cells[row_index - 1]
-                if len(above_row) > len(row):
-                    addable.append(Cell(last_cell.x + 1, last_cell.y))
-        addable.append(Cell(0, last_cell.y + 1))
+            above_len = self.partition[row_index - 1] if row_index > 0 else float("inf")
+            if above_len > len(row):
+                addable.append(Cell(len(row), row_index))
+        addable.append(Cell(0, len(self.partition)))
         return addable
 
     def reachable_young_diagrams_by_addition(self) -> list["YoungDiagram"]:
-        diagrams = []
-        for cell in self.addable_cells():
-            new_partition = self.partition.copy()
-            if cell.y == len(new_partition):
-                new_partition.append(1)
-            else:
-                new_partition[cell.y] += 1
-            diagrams.append(YoungDiagram(new_partition))
-        return diagrams
+        return [self + cell for cell in self.addable_cells()]
 
     def removable_cells(self) -> list[Cell]:
         removable = []
         for row_index, row in enumerate(self.cells):
-            last_cell = row[-1]
-            if row_index == len(self.cells) - 1:
-                removable.append(last_cell)
-            else:
-                below_row = self.cells[row_index + 1]
-                if len(below_row) < len(row):
-                    removable.append(last_cell)
+            below_len = (
+                self.partition[row_index + 1]
+                if row_index < len(self.partition) - 1
+                else 0
+            )
+            if below_len < len(row):
+                removable.append(Cell(len(row) - 1, row_index))
         return removable
 
     def reachable_young_diagrams_by_removal(self) -> list["YoungDiagram"]:
-        diagrams = []
-        for cell in self.removable_cells():
-            new_partition = self.partition.copy()
-            new_partition[cell.y] -= 1
-            if new_partition[cell.y] == 0:
-                new_partition.pop()
-            diagrams.append(YoungDiagram(new_partition))
-        return diagrams
+        return [self - cell for cell in self.removable_cells()]
 
     def _draw_with_marks(
         self, marks: dict[tuple[int, int], str], height: int, width: int
@@ -143,25 +135,25 @@ class YoungDiagram:
             diagram[y][x] = ch
         for row in diagram:
             print(" ".join(row))
-    
+
     def draw_addable(self):
         """Draw the Young diagram with addable cells marked by '+'."""
-        marks = {(c.x, c.y): '+' for c in self.addable_cells()}
+        marks = {(c.x, c.y): "+" for c in self.addable_cells()}
         self._draw_with_marks(
             marks,
             height=len(self.partition) + 1,
-            width=max(self.partition) + 1 if self.partition else 1
+            width=max(self.partition) + 1 if self.partition else 1,
         )
 
     def draw_removable(self):
         """draws the young diagram with the removable cells marked with a red square.
         the function removable_cells is used.
         """
-        marks = {(c.x, c.y): '□' for c in self.removable_cells()}
+        marks = {(c.x, c.y): "□" for c in self.removable_cells()}
         self._draw_with_marks(
             marks,
             height=len(self.partition),
-            width=max(self.partition) if self.partition else 0
+            width=max(self.partition) if self.partition else 0,
         )
 
     def hook_length(self, index: tuple[int, int]) -> int:
@@ -172,8 +164,7 @@ class YoungDiagram:
             if x < len(row):
                 below.append(row[x])
 
-        below = len(below)
-        return right + below + 1
+        return right + len(below) + 1
 
     def number_of_standard_tableaux(self) -> int:
         n = sum(self.partition)
@@ -206,7 +197,7 @@ class YoungDiagram:
         if other not in self.addable_cells():
             raise ValueError("Cell is not addable.")
 
-        new_partition = self.partition.copy()
+        new_partition = list(self.partition)
         if other.y == len(new_partition):
             new_partition.append(1)
         else:
@@ -217,7 +208,7 @@ class YoungDiagram:
         if other not in self.removable_cells():
             raise ValueError("Cell is not removable.")
 
-        new_partition = self.partition.copy()
+        new_partition = list(self.partition)
         new_partition[other.y] -= 1
         if new_partition[other.y] == 0:
             new_partition.pop()
@@ -226,14 +217,18 @@ class YoungDiagram:
     def __eq__(self, other: "YoungDiagram") -> bool:
         return self.partition == other.partition
 
+    def __hash__(self) -> int:
+        return hash(self.partition)
+
     def conjugate(self) -> "YoungDiagram":
+        if not self.partition:
+            return YoungDiagram([])
         new_partition = [
             sum(1 for x in self.partition if x >= j)
             for j in range(1, self.partition[0] + 1)
         ]
-        print(new_partition)
         return YoungDiagram(new_partition)
-    
+
     @classmethod
     def _ensure_partition_tables(cls, n: int):
         if cls._max_precomputed >= n:
@@ -253,7 +248,6 @@ class YoungDiagram:
 
         cls._P = P
         cls._max_precomputed = n
-
 
     @classmethod
     def random(cls, num_cells: int) -> "YoungDiagram":
