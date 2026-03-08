@@ -266,6 +266,9 @@ class YoungDiagram:
     def is_self_conjugate(self) -> bool:
         return self == self.conjugate()
 
+    def is_strict(self) -> bool:
+        return all(x > y for x, y in zip(self.partition, self.partition[1:]))
+
     def dominates(self, other: "YoungDiagram") -> bool:
         """self dominates (≽) other if the cumulative sum of self's parts is >= other's
         at every position."""

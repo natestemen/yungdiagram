@@ -179,10 +179,11 @@ def test_leg_length():
     # ■ ■
     # ■
     for i in range(5):
-        assert yd.leg_length((0, i)) == 5 - i -1
-    
+        assert yd.leg_length((0, i)) == 5 - i - 1
+
     assert yd.leg_length((1, 1)) == 2
     assert yd.leg_length((2, 1)) == 0
+
 
 def test_hook_length():
     yd = YoungDiagram((3, 3, 2))
@@ -274,3 +275,10 @@ def test_draw_removable_returns_string():
     assert isinstance(result, str)
     assert "□" in result
 
+
+def test_is_strict():
+    yd = YoungDiagram([6, 5, 1])
+    assert yd.is_strict()
+
+    yd = YoungDiagram([6, 5, 5, 4])
+    assert not yd.is_strict()
