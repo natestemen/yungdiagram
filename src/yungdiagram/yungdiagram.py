@@ -283,14 +283,14 @@ class YoungDiagram:
         )
 
     @property
-    def rank(self) -> int:
+    def durfee_square_size(self) -> int:
         return sum(
             1 for k, row_len in enumerate(self.partition, start=1) if row_len >= k
         )
 
     def durfee_square(self) -> "YoungDiagram":
-        rank = self.rank
-        return YoungDiagram([rank] * rank)
+        size = self.durfee_square_size
+        return YoungDiagram([size] * size)
 
     @classmethod
     def _ensure_partition_tables(cls, n: int):
@@ -340,3 +340,13 @@ class YoungDiagram:
             max_row = k
 
         return cls(partition)
+
+    def _repr_html_(self) -> str:
+        rows = []
+        for row_len in self.partition:
+            cells = "".join(
+                '<td style="width:30px;height:30px;border:1px solid black;"></td>'
+                * row_len
+            )
+            rows.append(f"<tr>{cells}</tr>")
+        return f'<table style="border-collapse:collapse;">{"".join(rows)}</table>'
