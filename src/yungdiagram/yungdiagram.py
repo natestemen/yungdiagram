@@ -283,14 +283,14 @@ class YoungDiagram:
         )
 
     @property
-    def durfee_square_size(self) -> int:
+    def rank(self) -> int:
         return sum(
             1 for k, row_len in enumerate(self.partition, start=1) if row_len >= k
         )
 
     def durfee_square(self) -> "YoungDiagram":
-        size = self.durfee_square_size
-        return YoungDiagram([size] * size)
+        rank = self.rank
+        return YoungDiagram([rank] * rank)
 
     @classmethod
     def _ensure_partition_tables(cls, n: int):
