@@ -284,12 +284,11 @@ class YoungDiagram:
         return all(
             p >= q for p, q in zip_longest(self.partition, other.partition, fillvalue=0)
         )
-    
+
     def strictly_contains(self, other: "YoungDiagram") -> bool:
         return all(
             p > q for p, q in zip_longest(self.partition, other.partition, fillvalue=0)
         )
-
 
     def div(self, other: "YoungDiagram") -> "SkewDiagram":
         return SkewDiagram(self, other)
@@ -366,17 +365,64 @@ class YoungDiagram:
 
 class SkewDiagram:
     def __init__(self, big: YoungDiagram, small: YoungDiagram):
-        # if small is None, return YoungDiagram? (rather than skew)
+        # TODO: if small is None, return YoungDiagram? (rather than skew)
         if not big.contains(small):
             raise ValueError("The first argument does not contain the second.")
         self.big = big
         self.small = small
-    
+
+    def __repr__(self) -> str:
+        return f"SkewDiagram({self.big.partition}, {self.small.partition})"
+
     def __eq__(self, other: "SkewDiagram") -> bool:
         if not isinstance(other, SkewDiagram):
             return False
         return self.big == other.big and self.small == other.small
-    
+
+    def __hash__(self) -> int:
+        return hash((self.big.partition, self.small.partition))
+
+    def __contains__(self, cell: Cell | tuple[int, int]) -> bool:
+        return cell in self.big and cell not in self.small
+
+    @property
+    def size(self) -> int:
+        return self.big.size - self.small.size
+
+    @property
+    def cells(self) -> list[Cell]:
+        return [
+            Cell(x, y)
+            for y, row_len in enumerate(self.big.partition)
+            for x in range(
+                self.small.partition[y] if y < len(self.small.partition) else 0,
+                row_len,
+            )
+        ]
+
+    def conjugate(self) -> "SkewDiagram":
+        return SkewDiagram(self.big.conjugate(), self.small.conjugate())
+
+    def is_horizontal_strip(self) -> bool:
+        """A skew shape is a horizontal strip if it has at most one cell per column,
+        equivalently if small_i >= big_{i+1} for all i."""
+        return all(
+            small_i >= big_i1
+            for small_i, big_i1 in zip_longest(
+                self.small.partition, self.big.partition[1:], fillvalue=0
+            )
+        )
+
+    def is_vertical_strip(self) -> bool:
+        """A skew shape is a vertical strip if it has at most one cell per row,
+        equivalently if big_i - small_i <= 1 for all i."""
+        return all(
+            big_i - small_i <= 1
+            for big_i, small_i in zip_longest(
+                self.big.partition, self.small.partition, fillvalue=0
+            )
+        )
+
     def is_connected(self) -> bool:
         cells = set()
         for y, row_len in enumerate(self.big.partition):

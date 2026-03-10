@@ -18,14 +18,16 @@ def construct_tableau_from_filling(
 
 class YoungTableau:
     def __init__(self, filling: list[list[int]]):
+        # TODO: doesn't have to be a standard filling!
         if not self._valid_filling(filling):
             raise ValueError(
-                "Invalid tableau filling. Filling must be weakly row increasing and strongly column increasing."
+                "Invalid tableau filling. Filling must be row nondecreasing and column increasing."
             )
-        self.diagram = construct_tableau_from_filling(filling)
+        self.diagram: YoungDiagram = construct_tableau_from_filling(filling)
         self.filling = filling
 
     def _valid_filling(self, filling: list[list[int]]) -> bool:
+        # TODO: turns out you can have whole rows/columns missing so 
         is_weakly_row_increasing = all(
             y >= x for row in filling for x, y in zip(row, row[1:])
         )
@@ -44,5 +46,5 @@ class YoungTableau:
 
 class SkewTableau:
     def __init__(self, filling: list[list[int | None]]):
-        self.diagram = construct_tableau_from_filling(filling)
+        self.diagram: SkewDiagram = construct_tableau_from_filling(filling)
         self.filling = filling
