@@ -19,7 +19,7 @@ class YoungDiagram:
 
     def __init__(self, partition: tuple[int, ...] | list[int]):
         self.partition = self._validate_partition(list(partition))
-        self.cells = self._generate_cells(list(partition))
+        self.cells = self._generate_cells(partition)
 
     def _validate_partition(self, partition: list[int]) -> tuple[int, ...]:
         while partition and partition[-1] == 0:
