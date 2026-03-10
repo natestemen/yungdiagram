@@ -284,6 +284,15 @@ class YoungDiagram:
         return all(
             p >= q for p, q in zip_longest(self.partition, other.partition, fillvalue=0)
         )
+    
+    def strictly_contains(self, other: "YoungDiagram") -> bool:
+        return all(
+            p > q for p, q in zip_longest(self.partition, other.partition, fillvalue=0)
+        )
+
+
+    def div(self, other: "YoungDiagram") -> "SkewDiagram":
+        return SkewDiagram(self, other)
 
     @property
     def durfee_square_size(self) -> int:
@@ -353,3 +362,40 @@ class YoungDiagram:
             )
             rows.append(f"<tr>{cells}</tr>")
         return f'<table style="border-collapse:collapse;">{"".join(rows)}</table>'
+
+
+class SkewDiagram:
+    def __init__(self, big: YoungDiagram, small: YoungDiagram):
+        # if small is None, return YoungDiagram? (rather than skew)
+        if not big.contains(small):
+            raise ValueError("The first argument does not contain the second.")
+        self.big = big
+        self.small = small
+    
+    def __eq__(self, other: "SkewDiagram") -> bool:
+        if not isinstance(other, SkewDiagram):
+            return False
+        return self.big == other.big and self.small == other.small
+    
+    def is_connected(self) -> bool:
+        cells = set()
+        for y, row_len in enumerate(self.big.partition):
+            small_len = self.small.partition[y] if y < len(self.small.partition) else 0
+            for x in range(small_len, row_len):
+                cells.add((x, y))
+
+        if not cells:
+            return True
+
+        visited = set()
+        queue = [next(iter(cells))]
+        while queue:
+            x, y = queue.pop()
+            if (x, y) in visited:
+                continue
+            visited.add((x, y))
+            for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                if (nx, ny) in cells and (nx, ny) not in visited:
+                    queue.append((nx, ny))
+
+        return len(visited) == len(cells)
