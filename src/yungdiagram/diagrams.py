@@ -47,9 +47,11 @@ class YoungDiagram:
 
     @property
     def size(self) -> int:
+        """Total number of cells (sum of partition parts)."""
         return sum(self.partition)
 
     def content(self, index: tuple[int, int]) -> int:
+        """Content of a cell: x - y (diagonal index; 0 on the main diagonal)."""
         return self[index].content
 
     def __repr__(self) -> str:
@@ -131,6 +133,8 @@ class YoungDiagram:
         return [self + cell for cell in self.addable_cells()]
 
     def removable_cells(self) -> list[Cell]:
+        """Cells that can be removed while keeping the partition valid (corner cells).
+        """
         removable = []
         for row_index, row in enumerate(self.cells):
             below_len = (
@@ -178,21 +182,25 @@ class YoungDiagram:
         )
 
     def arm_length(self, cell: Cell | tuple[int, int]) -> int:
+        """Number of cells strictly to the right of *cell* in the same row."""
         if cell not in self:
             raise ValueError(f"cell {cell} is not contained in diagram.")
         x, y = cell
         return self.partition[y] - x - 1
 
     def leg_length(self, cell: Cell | tuple[int, int]) -> int:
+        """Number of cells strictly below *cell* in the same column."""
         if cell not in self:
             raise ValueError(f"cell {cell} is not contained in diagram.")
         x, y = cell
         return sum(1 for row in self.partition[y + 1 :] if row > x)
 
     def hook_length(self, cell: Cell | tuple[int, int]) -> int:
+        """arm_length + leg_length + 1; the key quantity in the hook-length formula."""
         return self.arm_length(cell) + self.leg_length(cell) + 1
 
     def number_of_standard_tableaux(self) -> int:
+        """Number of SYTs of this shape via the hook-length formula n! / ∏ h(c)."""
         n = sum(self.partition)
         hook_lengths = []
         for y, row in enumerate(self.cells):
@@ -255,6 +263,7 @@ class YoungDiagram:
         return NotImplemented
 
     def conjugate(self) -> "YoungDiagram":
+        """Transpose: reflect the diagram across the main diagonal."""
         if not self.partition:
             return YoungDiagram([])
         new_partition = [
@@ -264,9 +273,12 @@ class YoungDiagram:
         return YoungDiagram(new_partition)
 
     def is_self_conjugate(self) -> bool:
+        """True if the diagram equals its own conjugate (symmetric about the diagonal).
+        """
         return self == self.conjugate()
 
     def is_strict(self) -> bool:
+        """True if all parts of the partition are strictly decreasing."""
         return all(x > y for x, y in zip(self.partition, self.partition[1:]))
 
     def dominates(self, other: "YoungDiagram") -> bool:
@@ -286,20 +298,24 @@ class YoungDiagram:
         )
 
     def strictly_contains(self, other: "YoungDiagram") -> bool:
+        """True if every row of self is strictly longer than the corresponding row."""
         return all(
             p > q for p, q in zip_longest(self.partition, other.partition, fillvalue=0)
         )
 
     def div(self, other: "YoungDiagram") -> "SkewDiagram":
+        """Return the skew shape self / other. Raises ValueError if other ⊄ self."""
         return SkewDiagram(self, other)
 
     @property
     def durfee_square_size(self) -> int:
+        """Side length of the largest square fitting inside the diagram."""
         return sum(
             1 for k, row_len in enumerate(self.partition, start=1) if row_len >= k
         )
 
     def durfee_square(self) -> "YoungDiagram":
+        """Return the Durfee square as a YoungDiagram."""
         size = self.durfee_square_size
         return YoungDiagram([size] * size)
 
@@ -325,6 +341,7 @@ class YoungDiagram:
 
     @classmethod
     def random(cls, num_cells: int) -> "YoungDiagram":
+        """Return a uniformly random Young diagram with exactly num_cells cells."""
         cls._ensure_partition_tables(num_cells)
 
         partition = []
@@ -428,10 +445,12 @@ class SkewDiagram:
 
     @property
     def size(self) -> int:
+        """Number of cells in the skew region λ/μ."""
         return self.big.size - self.small.size
 
     @property
     def cells(self) -> list[Cell]:
+        """List of Cell objects in the skew region, in English reading order."""
         return [
             Cell(x, y)
             for y, row_len in enumerate(self.big.partition)
@@ -442,6 +461,7 @@ class SkewDiagram:
         ]
 
     def conjugate(self) -> "SkewDiagram":
+        """Transpose the skew shape: conjugate of λ / conjugate of μ."""
         return SkewDiagram(self.big.conjugate(), self.small.conjugate())
 
     def is_horizontal_strip(self) -> bool:
@@ -465,6 +485,7 @@ class SkewDiagram:
         )
 
     def is_connected(self) -> bool:
+        """True if the skew cells form a connected region under 4-adjacency."""
         cells = set()
         for y, row_len in enumerate(self.big.partition):
             small_len = self.small.partition[y] if y < len(self.small.partition) else 0

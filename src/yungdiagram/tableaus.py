@@ -61,6 +61,7 @@ class YoungTableau:
         return f'<table style="border-collapse:collapse;">{"".join(rows)}</table>'
 
     def is_semistandard(self):
+        """True if rows are weakly increasing and columns are strictly increasing."""
         is_weakly_row_increasing = all(
             y >= x for row in self.filling for x, y in zip(row, row[1:])
         )
@@ -72,6 +73,7 @@ class YoungTableau:
         return is_weakly_row_increasing and is_column_strictly_increasing
 
     def is_standard(self):
+        """True if the filling uses {1, …, n} exactly once with strict rows and cols."""
         values = set(n for row in self.filling for n in row)
         if values != set(range(1, self.diagram.size + 1)):
             return False
@@ -97,6 +99,7 @@ class YoungTableau:
         return tuple(counts.get(i, 0) for i in range(1, max_label + 1))
 
     def conjugate(self) -> "YoungTableau":
+        """Transpose the filling; conjugate of a standard tableau is standard."""
         max_cols = max(len(row) for row in self.filling) if self.filling else 0
         n_rows = len(self.filling)
         transposed = [
@@ -161,6 +164,7 @@ class SkewTableau:
         return f'<table style="border-collapse:collapse;">{"".join(rows)}</table>'
 
     def is_semistandard(self) -> bool:
+        """True if non-None entries are weakly increasing in rows, strictly in cols."""
         for row in self.filling:
             non_none = [x for x in row if x is not None]
             if any(b < a for a, b in zip(non_none, non_none[1:])):
@@ -173,6 +177,7 @@ class SkewTableau:
         return True
 
     def is_standard(self) -> bool:
+        """True if non-None entries are {1, …, n} exactly once, strictly increasing."""
         values = [x for row in self.filling for x in row if x is not None]
         if set(values) != set(range(1, self.diagram.size + 1)):
             return False
@@ -196,6 +201,7 @@ class SkewTableau:
         return tuple(counts.get(i, 0) for i in range(1, max_label + 1))
 
     def conjugate(self) -> "SkewTableau":
+        """Transpose the filling; conjugate of a standard skew tableau is standard."""
         max_cols = max(len(row) for row in self.filling) if self.filling else 0
         n_rows = len(self.filling)
         transposed = [
