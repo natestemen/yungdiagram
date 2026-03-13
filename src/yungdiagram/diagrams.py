@@ -374,6 +374,47 @@ class SkewDiagram:
     def __repr__(self) -> str:
         return f"SkewDiagram({self.big.partition}, {self.small.partition})"
 
+    def __str__(self) -> str:
+        return format(self)
+
+    def __format__(self, convention: str) -> str:
+        if convention not in ("", "english", "french"):
+            raise ValueError(
+                f"Unknown convention {convention!r}. "
+                "Expected 'english' or 'french'."
+            )
+        rows = []
+        for y, big_len in enumerate(self.big.partition):
+            small_len = (
+                self.small.partition[y] if y < len(self.small.partition) else 0
+            )
+            row = "  " * small_len + "■ " * (big_len - small_len)
+            rows.append(row.rstrip())
+        if convention == "french":
+            rows = list(reversed(rows))
+        return "\n".join(rows)
+
+    def _repr_html_(self) -> str:
+        td_filled = (
+            "width:30px;height:30px;"
+            "border:1px solid black;background-color:#d0d0d0;"
+        )
+        td_empty = "width:30px;height:30px;"
+        rows = []
+        for y, big_len in enumerate(self.big.partition):
+            small_len = (
+                self.small.partition[y] if y < len(self.small.partition) else 0
+            )
+            cells = (
+                "".join(f'<td style="{td_empty}"></td>' for _ in range(small_len))
+                + "".join(
+                    f'<td style="{td_filled}"></td>'
+                    for _ in range(big_len - small_len)
+                )
+            )
+            rows.append(f"<tr>{cells}</tr>")
+        return f'<table style="border-collapse:collapse;">{"".join(rows)}</table>'
+
     def __eq__(self, other: "SkewDiagram") -> bool:
         if not isinstance(other, SkewDiagram):
             return False

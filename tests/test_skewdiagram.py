@@ -93,6 +93,32 @@ def test_is_vertical_strip():
     assert not skew2.is_vertical_strip()
 
 
+def test_str_english():
+    # • ■ ■
+    # ■ ■
+    skew = SkewDiagram(YoungDiagram([3, 2]), YoungDiagram([1]))
+    assert str(skew) == "  ■ ■\n■ ■"
+
+
+def test_str_french():
+    skew = SkewDiagram(YoungDiagram([3, 2]), YoungDiagram([1]))
+    assert format(skew, "french") == "■ ■\n  ■ ■"
+
+
+def test_str_unknown_convention():
+    skew = SkewDiagram(YoungDiagram([3, 2]), YoungDiagram([1]))
+    with pytest.raises(ValueError, match="Unknown convention"):
+        format(skew, "russian")
+
+
+def test_repr_html():
+    skew = SkewDiagram(YoungDiagram([3, 2]), YoungDiagram([1]))
+    html = skew._repr_html_()
+    assert "<table" in html
+    assert "#d0d0d0" in html   # filled cells
+    assert "30px" in html
+
+
 def test_skew_connectedness():
     # • • ■ ■
     # • * ■ ■

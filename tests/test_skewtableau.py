@@ -1,4 +1,45 @@
+import pytest
+
 from yungdiagram import SkewDiagram, SkewTableau, YoungDiagram
+
+
+def test_repr():
+    st = SkewTableau([[None, 1, 2], [None, 3, 4]])
+    assert repr(st) == "SkewTableau([[None, 1, 2], [None, 3, 4]])"
+
+
+def test_eq_and_hash():
+    a = SkewTableau([[None, 1, 2], [None, 3, 4]])
+    b = SkewTableau([[None, 1, 2], [None, 3, 4]])
+    c = SkewTableau([[None, 1, 3], [None, 2, 4]])
+    assert a == b
+    assert a != c
+    assert hash(a) == hash(b)
+    assert hash(a) != hash(c)
+
+
+def test_str_english():
+    st = SkewTableau([[None, 1, 2], [None, 3, 4]])
+    assert str(st) == "  1 2\n  3 4"
+
+
+def test_str_french():
+    st = SkewTableau([[None, 1, 2], [None, 3, 4]])
+    assert format(st, "french") == "  3 4\n  1 2"
+
+
+def test_str_unknown_convention():
+    st = SkewTableau([[None, 1, 2], [None, 3, 4]])
+    with pytest.raises(ValueError, match="Unknown convention"):
+        format(st, "russian")
+
+
+def test_repr_html():
+    st = SkewTableau([[None, 1, 2], [None, 3, 4]])
+    html = st._repr_html_()
+    assert "<table" in html
+    assert ">1<" in html
+    assert "#e0e0e0" in html  # inner cells shaded
 
 
 def test_skew_tableau_initialization():

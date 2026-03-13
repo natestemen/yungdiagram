@@ -25,6 +25,41 @@ class YoungTableau:
         self.diagram: YoungDiagram = construct_tableau_from_filling(filling)
         self.filling = filling
 
+    def __repr__(self) -> str:
+        return f"YoungTableau({self.filling!r})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, YoungTableau):
+            return False
+        return self.filling == other.filling
+
+    def __hash__(self) -> int:
+        return hash(tuple(tuple(row) for row in self.filling))
+
+    def __str__(self) -> str:
+        return format(self)
+
+    def __format__(self, convention: str) -> str:
+        if convention not in ("", "english", "french"):
+            raise ValueError(
+                f"Unknown convention {convention!r}. Expected 'english' or 'french'."
+            )
+        if not self.filling:
+            return ""
+        width = max(len(str(x)) for row in self.filling for x in row)
+        rows = [" ".join(str(x).rjust(width) for x in row) for row in self.filling]
+        if convention == "french":
+            rows = list(reversed(rows))
+        return "\n".join(rows)
+
+    def _repr_html_(self) -> str:
+        td = 'style="width:30px;height:30px;border:1px solid black;text-align:center;"'
+        rows = []
+        for row in self.filling:
+            cells = "".join(f"<td {td}>{x}</td>" for x in row)
+            rows.append(f"<tr>{cells}</tr>")
+        return f'<table style="border-collapse:collapse;">{"".join(rows)}</table>'
+
     def is_semistandard(self):
         is_weakly_row_increasing = all(
             y >= x for row in self.filling for x, y in zip(row, row[1:])
@@ -37,8 +72,15 @@ class YoungTableau:
         return is_weakly_row_increasing and is_column_strictly_increasing
 
     def is_standard(self):
-        return set(n for row in self.filling for n in row) == set(
-            range(1, self.diagram.size + 1)
+        values = set(n for row in self.filling for n in row)
+        if values != set(range(1, self.diagram.size + 1)):
+            return False
+        if not all(y > x for row in self.filling for x, y in zip(row, row[1:])):
+            return False
+        return all(
+            self.filling[y + 1][x] > self.filling[y][x]
+            for y in range(len(self.filling) - 1)
+            for x in range(len(self.filling[y + 1]))
         )
     
     @property
@@ -68,6 +110,55 @@ class SkewTableau:
     def __init__(self, filling: list[list[int | None]]):
         self.diagram: SkewDiagram = construct_tableau_from_filling(filling)
         self.filling = filling
+
+    def __repr__(self) -> str:
+        return f"SkewTableau({self.filling!r})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SkewTableau):
+            return False
+        return self.filling == other.filling
+
+    def __hash__(self) -> int:
+        return hash(tuple(tuple(row) for row in self.filling))
+
+    def __str__(self) -> str:
+        return format(self)
+
+    def __format__(self, convention: str) -> str:
+        if convention not in ("", "english", "french"):
+            raise ValueError(
+                f"Unknown convention {convention!r}. Expected 'english' or 'french'."
+            )
+        if not self.filling:
+            return ""
+        all_values = [x for row in self.filling for x in row if x is not None]
+        width = max(len(str(x)) for x in all_values) if all_values else 1
+        blank = " " * width
+        rows = [
+            " ".join(str(x).rjust(width) if x is not None else blank for x in row)
+            for row in self.filling
+        ]
+        if convention == "french":
+            rows = list(reversed(rows))
+        return "\n".join(rows)
+
+    def _repr_html_(self) -> str:
+        td_filled = (
+            'style="width:30px;height:30px;'
+            'border:1px solid black;text-align:center;"'
+        )
+        td_empty = 'style="width:30px;height:30px;background-color:#e0e0e0;"'
+        rows = []
+        for row in self.filling:
+            cells = "".join(
+                f"<td {td_filled}>{x}</td>"
+                if x is not None
+                else f"<td {td_empty}></td>"
+                for x in row
+            )
+            rows.append(f"<tr>{cells}</tr>")
+        return f'<table style="border-collapse:collapse;">{"".join(rows)}</table>'
 
     def is_semistandard(self) -> bool:
         for row in self.filling:
